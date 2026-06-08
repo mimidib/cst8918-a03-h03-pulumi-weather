@@ -47,7 +47,7 @@ const image = new dockerBuild.Image(`${prefixName}-image`, {
   context: { location: appPath },
   dockerfile: { location: `${appPath}/Dockerfile` },
   target: 'production',
-  platforms: ['linux/amd64', 'linux/arm64'],
+  platforms: ['linux/amd64'],
   push: true,
   registries: [
     {
@@ -88,7 +88,7 @@ const containerGroup = new containerinstance.ContainerGroup(
           },
           {
             name: 'WEATHER_API_KEY',
-            value: '<your-secret-key>',
+            value: '81b4e2b68f174191ccac92d3602ed1a5',
           },
         ],
         resources: {
