@@ -88,7 +88,7 @@ const containerGroup = new containerinstance.ContainerGroup(
           },
           {
             name: 'WEATHER_API_KEY',
-            value: '81b4e2b68f174191ccac92d3602ed1a5',
+            value: config.requireSecret('weatherApiKey'),
           },
         ],
         resources: {
