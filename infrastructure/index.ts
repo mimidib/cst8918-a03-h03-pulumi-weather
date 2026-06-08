@@ -1,3 +1,4 @@
+import * as containerinstance from '@pulumi/azure-native/containerinstance'
 import * as dockerBuild from '@pulumi/docker-build'
 import * as resources from '@pulumi/azure-native/resources'
 import * as containerregistry from '@pulumi/azure-native/containerregistry'
@@ -56,3 +57,63 @@ const image = new dockerBuild.Image(`${prefixName}-image`, {
     },
   ],
 })
+// Create a container group in the Azure Container App service and make it publicly accessible. A container group is similar to a K8s Pod.
+const containerGroup = new containerinstance.ContainerGroup(
+  `${prefixName}-container-group`,
+  {
+    resourceGroupName: resourceGroup.name,
+    osType: 'linux',
+    restartPolicy: 'always',
+    imageRegistryCredentials: [
+      {
+        server: registry.loginServer,
+        username: registryCredentials.username,
+        password: registryCredentials.password,
+      },
+    ],
+    containers: [
+      {
+        name: imageName,
+        image: image.ref,
+        ports: [
+          {
+            port: containerPort,
+            protocol: 'tcp',
+          },
+        ],
+        environmentVariables: [
+          {
+            name: 'PORT',
+            value: containerPort.toString(),
+          },
+          {
+            name: 'WEATHER_API_KEY',
+            value: '<your-secret-key>',
+          },
+        ],
+        resources: {
+          requests: {
+            cpu: cpu,
+            memoryInGB: memory,
+          },
+        },
+      },
+    ],
+    ipAddress: {
+      type: containerinstance.ContainerGroupIpAddressType.Public,
+      dnsNameLabel: `${imageName}`,
+      ports: [
+        {
+          port: publicPort,
+          protocol: 'tcp',
+        },
+      ],
+    },
+  },
+)
+// Export the service's IP address, hostname, and fully-qualified URL.
+export const hostname = containerGroup.ipAddress.apply((addr) => addr!.fqdn!)
+export const ip = containerGroup.ipAddress.apply((addr) => addr!.ip!)
+export const url = containerGroup.ipAddress.apply(
+  (addr) => `http://${addr!.fqdn!}:${containerPort}`,
+)
